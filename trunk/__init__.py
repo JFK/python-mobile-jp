@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# Copyright 2009 fumikazu.kiyota.com
+# Copyright 2010 fumikazu.kiyota@gmail.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
 # not use this file except in compliance with the License. You may obtain
@@ -21,49 +21,40 @@ class factory:
     def __init__(self, **kwargs):
 
         libName = kwargs['libName']
-        self.userAgent = kwargs['userAgent']
-        self.imageUrl = kwargs['imageUrl']
-        self.carrierType = self.detectCarrier()
-
-        __import__(libName + '.' + self.carrierType)
-        if self.carrierType == 'pc':
-            self.carrier = convert(
-                translationTable = pc.map(),
-                carrierType = self.carrierType,
-                imageUrl = self.imageUrl
-                )
-
-        elif self.carrierType == 'softbank':
-            self.carrier = convert(
-                translationTable = softbank.map(),
-                carrierType = self.carrierType
-                )
-
-        elif self.carrierType == 'docomo':
-            self.carrier = convert(
-                translationTable = docomo.map(),
-                carrierType = self.carrierType
-                )
-
-        elif self.carrierType == 'au':
-            self.carrier = convert(
-                translationTable = au.map(),
-                carrierType = self.carrierType
-                )
-
-    def detectCarrier(self):
+        userAgent = kwargs['userAgent']
 
         DOCOMO_RE   = re.compile(r'^DoCoMo/\d\.\d[ /]')
         SOFTBANK_RE = re.compile(r'^(?:(?:SoftBank|Vodafone)/\d\.\d|MOT-)')
         AU_RE = re.compile(r'^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\/')
 
-        if DOCOMO_RE.match(self.userAgent):
-            return "docomo"
-        elif AU_RE.match(self.userAgent):
-            return "au"
-        elif SOFTBANK_RE.match(self.userAgent):
-            return "softbank"
-        return 'pc';
+        if DOCOMO_RE.match(userAgent):
+            __import__(libName + '.docomo')
+            self.carrier = convert(
+                translationTable = docomo.map(),
+                carrierType = 'docomo'
+                )
+
+        elif AU_RE.match(userAgent):
+            __import__(libName + '.au')
+            self.carrier = convert(
+                translationTable = au.map(),
+                carrierType = 'au'
+                )
+
+        elif SOFTBANK_RE.match(userAgent):
+            __import__(libName + '.softbank')
+            self.carrier = convert(
+                translationTable = softbank.map(),
+                carrierType = 'softbank'
+                )
+
+        else:
+            __import__(libName + '.pc')
+            self.carrier = convert(
+                translationTable = pc.map(),
+                carrierType = 'pc',
+                imageUrl = kwargs['imageUrl']
+                )
 
 class convert:
     def __init__(self, **kwargs):
