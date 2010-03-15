@@ -17,7 +17,6 @@
 import re
 
 class factory:
-
     def __init__(self, **kwargs):
 
         libName = kwargs['libName']
@@ -71,15 +70,13 @@ class convert:
             return "<img src='%s%s.gif' />" % \
                 (self.dict['imageUrl'], ''.join(map(lambda x: "%02x" % ord(x), text)))
 
-        elif self.isUtf8Carrier():
-            return text
-        else:
-            return ''.join(map(lambda x: "&#x%02x;" % ord(x), unicode(text, 'UTF-8')))
+        return text
+        #return ''.join(map(lambda x: "&#x%02x;" % ord(x), unicode(text, 'UTF-8')))
 
     def echo(self, text):
         if self.isUtf8Carrier():
             return text
-        return unicode(text,'utf-8').encode('Shift_JIS')
+        return  unicode(unicode(text,'utf-8').encode('Shift_JIS'),'Shift_JIS')
 
     def charset(self):
         if self.isUtf8Carrier():
