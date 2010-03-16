@@ -15,8 +15,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-def map():
-    return [
+import re
+class factory:
+    def type(self):
+        return 'pc'
+
+    def find(self, text):
+        return re.findall(ur'([\ue001-\ue44c]|[\ue501-\ue53e])', unicode(text, 'UTF-8'), re.UNICODE)
+
+    def map(self):
+        return [
             ["\xee\x80\x81" , "\x47\x21"],
             ["\xee\x80\x82" , "\x47\x22"],
             ["\xee\x80\x83" , "\x47\x23"],

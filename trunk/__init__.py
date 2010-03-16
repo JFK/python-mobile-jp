@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright 2010 fumikazu.kiyota@gmail.com
 #
@@ -15,6 +16,7 @@
 # under the License.
 
 import re
+import struct
 
 class factory:
     def __init__(self, **kwargs):
@@ -28,62 +30,65 @@ class factory:
 
         if DOCOMO_RE.match(userAgent):
             __import__(libName + '.docomo')
-            self.carrier = convert(
-                translationTable = docomo.map(),
-                carrierType = 'docomo'
-                )
+            self.carrier = convert(docomo.factory())
 
         elif AU_RE.match(userAgent):
             __import__(libName + '.au')
-            self.carrier = convert(
-                translationTable = au.map(),
-                carrierType = 'au'
-                )
+            self.carrier = convert(au.factory())
 
         elif SOFTBANK_RE.match(userAgent):
             __import__(libName + '.softbank')
-            self.carrier = convert(
-                translationTable = softbank.map(),
-                carrierType = 'softbank'
-                )
+            self.carrier = convert(softbank.factory())
 
         else:
             __import__(libName + '.pc')
             self.carrier = convert(
-                translationTable = pc.map(),
-                carrierType = 'pc',
+                pc.factory(),
                 imageUrl = kwargs['imageUrl']
                 )
 
 class convert:
-    def __init__(self, **kwargs):
+    def __init__(self, cls, imageUrl=''):
+        self._ = cls
         self.dict = {}
-        self.dict.update(kwargs)
+        self.dict.update({'imageUrl':imageUrl})
+        self.dict.update({'carrierType':cls.type()})
+        if self.carrierType == 'pc' or self.carrierType == 'softbank':
+            self.dict.update({'charset':'UTF-8'})
+        else:
+            self.dict.update({'charset':'Shift_JIS'})
 
-    def emoji(self, text):
-        for x in self.dict['translationTable']:
-            if x[0] == text:
-                text = b""+x[1]+""
-                break
+    def __getattr__(self, key):
+        return self.dict[key]
 
-        if self.dict['carrierType'] == 'pc':
-            return "<img src='%s%s.gif' />" % \
-                (self.dict['imageUrl'], ''.join(map(lambda x: "%02x" % ord(x), text)))
-
+    def decode_all(self, text):
+        print map(hex,map(ord, text))
+        for x in self._.find(text):
+            text = text.replace(x.encode('UTF-8'), self.decode(x.encode('UTF-8')))
         return text
-        #return ''.join(map(lambda x: "&#x%02x;" % ord(x), unicode(text, 'UTF-8')))
 
-    def echo(self, text):
-        if self.isUtf8Carrier():
-            return text
-        return  unicode(unicode(text,'utf-8').encode('Shift_JIS'),'Shift_JIS')
+    def decode(self, text):
+        if not text: return
+        for x in self._.map():
+            if x[1] == text:
+                return x[0]
+        return text
 
-    def charset(self):
-        if self.isUtf8Carrier():
-            return 'UTF-8'
-        return 'Shift_JIS'
+    def encode_all(self, text):
+        for x in re.findall(ur'([\ue000-\uf8ff])', text, re.UNICODE):
+            try:
+                text = text.replace(x, self.encode(x))
+            except UnicodeDecodeError, e: pass
+        return text
 
-    def isUtf8Carrier(self):
-        if self.dict['carrierType'] == 'pc' or self.dict['carrierType'] == 'softbank':
-            return True;
-        return False;
+    def encode(self, text):
+        if not text: return
+        for x in self._.map():
+            if x[0] == text.encode('UTF-8'):
+                if self.carrierType == 'pc':
+                    return "<img src='%s%s.gif' />" % \
+                        (self.imageUrl, ''.join(map(lambda x: "%02x" % ord(x), x[1])))
+                try:
+                    return unicode(x[1],'UTF-8')
+                except TypeError, e: pass
+        return text
