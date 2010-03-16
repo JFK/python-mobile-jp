@@ -16,7 +16,6 @@
 # under the License.
 
 import re
-import struct
 
 class factory:
     def __init__(self, **kwargs):
