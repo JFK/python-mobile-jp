@@ -15,8 +15,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-def map():
-    return [
+import re
+class factory:
+    def type(self):
+        return 'docomo'
+
+    def find(self, text):
+        return re.findall(ur'([\ue63e-\ue757])', unicode(text, 'UTF-8'), re.UNICODE)
+
+    def map(self):
+        return [
         ["\xee\x80\x81" , "\xee\x9b\xb0"],
         ["\xee\x80\x82" , "\xee\x9b\xb0"],
         ["\xee\x80\x83" , "\xee\x9b\xb9"],
