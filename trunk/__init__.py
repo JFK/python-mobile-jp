@@ -16,35 +16,35 @@
 # under the License.
 
 import re
+import mylib.mobile
 
-class factory:
-    def __init__(self, **kwargs):
+def factory(**kwargs):
 
-        libName = kwargs['libName']
-        userAgent = kwargs['userAgent']
-
-        DOCOMO_RE   = re.compile(r'^DoCoMo/\d\.\d[ /]')
-        SOFTBANK_RE = re.compile(r'^(?:(?:SoftBank|Vodafone)/\d\.\d|MOT-)')
-        AU_RE = re.compile(r'^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\/')
-
-        if DOCOMO_RE.match(userAgent):
-            __import__(libName + '.docomo')
-            self.carrier = convert(docomo.factory())
-
-        elif AU_RE.match(userAgent):
-            __import__(libName + '.au')
-            self.carrier = convert(au.factory())
-
-        elif SOFTBANK_RE.match(userAgent):
-            __import__(libName + '.softbank')
-            self.carrier = convert(softbank.factory())
-
-        else:
-            __import__(libName + '.pc')
-            self.carrier = convert(
-                pc.factory(),
-                imageUrl = kwargs['imageUrl']
-                )
+    libName = kwargs['libName']
+    userAgent = kwargs['userAgent']
+    
+    DOCOMO_RE   = re.compile(r'^DoCoMo/\d\.\d[ /]')
+    SOFTBANK_RE = re.compile(r'^(?:(?:SoftBank|Vodafone)/\d\.\d|MOT-)')
+    AU_RE = re.compile(r'^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\/')
+    
+    if DOCOMO_RE.match(userAgent):
+        __import__(libName + '.docomo')
+        return convert(docomo.factory())
+    
+    elif AU_RE.match(userAgent):
+        __import__(libName + '.au')
+        return convert(au.factory())
+    
+    elif SOFTBANK_RE.match(userAgent):
+        __import__(libName + '.softbank')
+        return convert(softbank.factory())
+    
+    else:
+        __import__(libName + '.pc')
+        return convert(
+            pc.factory(),
+            imageUrl = kwargs['imageUrl']
+            )
 
 class convert:
     def __init__(self, cls, imageUrl=''):
