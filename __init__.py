@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # Copyright 2010 fumikazu.kiyota@gmail.com
 #
@@ -16,78 +15,54 @@
 # under the License.
 
 import re
-import mylib.mobile
 
-def factory(**kwargs):
+class factory(object):
 
-    libName = kwargs['libName']
-    userAgent = kwargs['userAgent']
+    def __init__(self, **kwargs):
     
-    DOCOMO_RE   = re.compile(r'^DoCoMo/\d\.\d[ /]')
-    SOFTBANK_RE = re.compile(r'^(?:(?:SoftBank|Vodafone)/\d\.\d|MOT-)')
-    AU_RE = re.compile(r'^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\/')
+        if re.compile(r'^DoCoMo/\d\.\d[ /]').match(kwargs['userAgent']):
+            self.cls = __import__(kwargs['libName'] + '.docomo').mobile.docomo.factory()
     
-    if DOCOMO_RE.match(userAgent):
-        __import__(libName + '.docomo')
-        return convert(docomo.factory())
+        elif re.compile(r'^(?:KDDI-[A-Z]+\d+[A-Z]? )?UP\.Browser\/').match(kwargs['userAgent']):
+            self.cls = __import__(kwargs['libName'] + '.au').mobile.au.factory()
     
-    elif AU_RE.match(userAgent):
-        __import__(libName + '.au')
-        return convert(au.factory())
+        elif re.compile(r'^(?:(?:SoftBank|Vodafone)/\d\.\d|MOT-)').match(kwargs['userAgent']):
+            self.cls = __import__(kwargs['libName'] + '.softbank').mobile.softbank.factory()
     
-    elif SOFTBANK_RE.match(userAgent):
-        __import__(libName + '.softbank')
-        return convert(softbank.factory())
-    
-    else:
-        __import__(libName + '.pc')
-        return convert(
-            pc.factory(),
-            imageUrl = kwargs['imageUrl']
-            )
-
-class convert:
-    def __init__(self, cls, imageUrl=''):
-        self._ = cls
-        self.dict = {}
-        self.dict.update({'imageUrl':imageUrl})
-        self.dict.update({'carrierType':cls.type()})
-        if self.carrierType == 'pc' or self.carrierType == 'softbank':
-            self.dict.update({'charset':'UTF-8'})
         else:
-            self.dict.update({'charset':'Shift_JIS'})
+            self.cls =  __import__(kwargs['libName'] + '.pc').mobile.pc.factory()
 
-    def __getattr__(self, key):
-        return self.dict[key]
+        self.imageUrl = kwargs['imageUrl'] or ''
+        self.carrierType = self.cls.type()
 
-    def decode_all(self, text):
-        print map(hex,map(ord, text))
-        for x in self._.find(text):
-            text = text.replace(x.encode('UTF-8'), self.decode(x.encode('UTF-8')))
+        if self.carrierType == 'pc' or self.carrierType == 'softbank':
+            self.charset = 'UTF-8'
+        else:
+            self.charset = 'Shift_JIS'
+
+    def to_unicode(self, text):
+        for x in self.cls.find(text):
+            text = text.replace(x.encode('UTF-8'), self._decode(x.encode('UTF-8')))
+        return unicode(text, 'UTF-8')
+
+    def echo(self, text):
+        for x in re.findall(ur'([\ue000-\uf8ff])', text, re.UNICODE):
+            text = text.replace(x, self._encode(x))
         return text
 
-    def decode(self, text):
+    def _decode(self, text):
         if not text: return
-        for x in self._.map():
+        for x in self.cls.map():
             if x[1] == text:
                 return x[0]
         return text
 
-    def encode_all(self, text):
-        for x in re.findall(ur'([\ue000-\uf8ff])', text, re.UNICODE):
-            try:
-                text = text.replace(x, self.encode(x))
-            except UnicodeDecodeError, e: pass
-        return text
-
-    def encode(self, text):
+    def _encode(self, text):
         if not text: return
-        for x in self._.map():
+        for x in self.cls.map():
             if x[0] == text.encode('UTF-8'):
                 if self.carrierType == 'pc':
                     return "<img src='%s%s.gif' />" % \
                         (self.imageUrl, ''.join(map(lambda x: "%02x" % ord(x), x[1])))
-                try:
-                    return unicode(x[1],'UTF-8')
-                except TypeError, e: pass
+                return unicode(x[1],'UTF-8')
         return text
