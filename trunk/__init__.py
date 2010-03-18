@@ -16,7 +16,7 @@
 
 import re
 
-class factory(object):
+class factory:
 
     def __init__(self, **kwargs):
     
@@ -32,7 +32,7 @@ class factory(object):
         else:
             self.cls =  __import__(kwargs['libName'] + '.pc').mobile.pc.factory()
 
-        self.imageUrl = kwargs['imageUrl'] or ''
+        self.imageUrl = kwargs['imageUrl']
         self.carrierType = self.cls.type()
 
         if self.carrierType == 'pc' or self.carrierType == 'softbank':
@@ -66,3 +66,4 @@ class factory(object):
                         (self.imageUrl, ''.join(map(lambda x: "%02x" % ord(x), x[1])))
                 return unicode(x[1],'UTF-8')
         return text
+
