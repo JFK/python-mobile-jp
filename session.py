@@ -44,6 +44,13 @@ class start:
     def remove(self):
         self._con.remove({'key':self.key()})
 
+    def save(self, data):
+        self._con.update({"key":self.key()},
+            {'$set': {'data':data,'time':str(int(time.time()))}})
+
+    def data(self):
+        return self._con.find_one({"key":key})['data']
+
     def lock(self, key):
         token = self._token()
         self._con.remove({'key':key})
