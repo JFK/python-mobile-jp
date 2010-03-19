@@ -72,6 +72,8 @@ class start:
                     {'$set': {'token':token,'time':str(int(time.time()))}})
                 self.session = "|".join([parts[0], token])
             else:
+                self._con.update({"key":key},
+                    {'$set': {'time':str(int(time.time()))}})
                 self.session = "|".join([parts[0], parts[1]])
             return True
         else:
