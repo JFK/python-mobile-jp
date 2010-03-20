@@ -27,6 +27,8 @@ class start:
     def __init__(self, **kwargs):
         self.authdb = 'sessiondb.transaction' if 'sessiondb' not in kwargs else kwargs['sessiondb']
         self.keyname = '_tk' if 'keyname' not in kwargs else kwargs['keyname']
+        self.keylength = 128 if 'keylength' not in kwargs else kwargs['keylength']
+        self.lifetime = 31 * 86400 if 'lifetime' not in kwargs else kwargs['lifetime']
         self.session = None
 
         con = Connection()
@@ -35,11 +37,11 @@ class start:
 
     def _token(self):
         letters=string.ascii_letters+string.digits
-        rnd = ''.join([random.choice(letters) for _ in range(128)])
+        rnd = ''.join([random.choice(letters) for _ in range(self.keylength)])
         return base64.b64encode(''.join([str(int(time.time())),rnd]))
 
     def _gc(self):
-        self._con.remove({'time':{'$gt':time.time() - 31 * 86400}})
+        self._con.remove({'time':{'$gt':time.time() - self.lifetime}})
 
     def remove(self):
         self._con.remove({'key':self.key()})
@@ -65,7 +67,7 @@ class start:
         key = base64.b64decode(parts[0])
         result = self._con.find_one({"key":key})
         if result and 'token' in result and result['token'] == parts[1] \
-             and result['time'] >= time.time() - 31 * 86400:
+             and result['time'] >= time.time() - self.lifetime:
             if 'renew' in  kwargs and kwargs['renew']:
                 token = self._token()
                 self._con.update({"key":key},
