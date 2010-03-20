@@ -49,7 +49,7 @@ class start:
             {'$set': {'data':data,'time':str(int(time.time()))}})
 
     def data(self):
-        return self._con.find_one({"key":key})['data']
+        return self._con.find_one({"key":self.key()})['data']
 
     def lock(self, key):
         token = self._token()
@@ -58,7 +58,7 @@ class start:
         self._con.create_index([("key", ASCENDING)])
         self.session = "|".join([base64.b64encode(key),token])
 
-    def open(self, value, renewtoken=False):
+    def open(self, value, **kwargs):
         if not value: return None
         parts = value.split("|")
         if len(parts) != 2: return None
@@ -66,7 +66,7 @@ class start:
         result = self._con.find_one({"key":key})
         if result and 'token' in result and result['token'] == parts[1] \
              and result['time'] >= time.time() - 31 * 86400:
-            if renewtoken:
+            if 'renew' in  kwargs and kwargs['renew']:
                 token = self._token()
                 self._con.update({"key":key},
                     {'$set': {'token':token,'time':str(int(time.time()))}})
