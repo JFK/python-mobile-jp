@@ -41,7 +41,7 @@ class start:
         return base64.b64encode(''.join([str(int(time.time())),rnd]))
 
     def _gc(self):
-        self._con.remove({'time':{'$gt':int(time.time()) - self._lifetime}})
+        self._con.remove({'time':{'$lt':int(time.time()) - self._lifetime}})
 
     def keyname(self):
         return self._keyname
