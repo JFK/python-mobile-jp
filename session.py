@@ -69,8 +69,6 @@ class start:
         if len(parts) != 2: return None
         key = base64.b64decode(parts[0])
         result = self._con.find_one({"key":key})
-        print  result['time']
-        print  int(time.time()) - self._lifetime
         if result and 'token' in result and result['token'] == parts[1] \
              and int(result['time']) > int(time.time()) - self._lifetime:
             if 'renew' in  kwargs and kwargs['renew']:
